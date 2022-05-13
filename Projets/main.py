@@ -1,10 +1,14 @@
 import pygame as pg
 import random
+import math
+import time
 
 # initialisation
 pg.init()
+
 # Create the screen:
 screen = pg.display.set_mode((800, 600))
+
 # Changing the title
 pg.display.set_caption("MONSTERS ATTACK ")
 
@@ -13,7 +17,7 @@ icon = pg.image.load("monster_image.png")
 pg.display.set_icon(icon)
 
 # Background
-backGround = pg.image.load("back_ground.png")
+backGround = pg.image.load("back_ground2.png")
 
 # Adding the player
 playerImage = pg.image.load("attacker.png")
@@ -21,6 +25,7 @@ positionXPlayer = 630
 positionYPlayer = 450
 playerYchange = 0
 playerXchange = 0
+
 
 def player(x, y):
     screen.blit(playerImage, (x, y))  # drawing the player on screen
@@ -32,17 +37,21 @@ list_Monsters = [pg.image.load("monster_image.png"), pg.image.load("monster_imag
 MonsterImage = list_Monsters[random.randint(0, len(list_Monsters) - 1)]
 positionXMonster = random.randint(50, 150)
 positionYMonster = random.randint(20, 500)
-monsterXChange = 4
-monsterYChange = 4
+monsterXChange = 1
+monsterYChange = 1
+
 
 def monster(x, y):
     screen.blit(MonsterImage, (x, y))
+
 
 # Creating the bullets
 bulletImage = pg.image.load("bullets.png")
 
 positionXBullet = positionXPlayer
+positionYBullet = 0
 BulletXChange = 10
+BulletYChange = 0
 bulletState = "ready"  # Ready -> you can't see the bullet on the screen
 
 
@@ -50,8 +59,17 @@ bulletState = "ready"  # Ready -> you can't see the bullet on the screen
 def fireBullet(x, y):
     global bulletState
     bulletState = "Fire"
-    screen.blit(bulletImage, (x+20, y+14.5))
+    screen.blit(bulletImage, (x + 20, y + 14.5))
 
+
+def isCollision(bulletX, bulletY, monsterX, monsterY):
+    distance = math.sqrt(math.pow(monsterX - bulletX, 2) + math.pow(monsterY - bulletY, 2))
+    collisionOccured = False
+    if distance < 27:
+        collisionOccured = True
+
+    return collisionOccured
+score = 0
 
 running = True
 while running:  # We iterate through all the possible events. The window stays
@@ -68,37 +86,37 @@ while running:  # We iterate through all the possible events. The window stays
                 playerYchange = 5
             if event.key == pg.K_DOWN:
                 playerYchange = -5
-            if event.key == pg.K_LEFT:
-                playerXchange = 5
-            if event.key == pg.K_RIGHT:
-                playerXchange = -5
+            #if event.key == pg.K_LEFT:
+            #    playerXchange = 5
+            #if event.key == pg.K_RIGHT:
+            #    playerXchange = -5
             if event.key == pg.K_SPACE:
-                fireBullet(positionXBullet,positionYPlayer)
+                positionYBullet = positionYPlayer
+                positionXBullet = positionXPlayer
+                fireBullet(positionXBullet, positionYBullet)
 
         if event.type == pg.KEYUP:
             if event.key == pg.K_UP or event.key == pg.K_DOWN or pg.K_LEFT or event.key == pg.K_RIGHT:
                 playerYchange = 0
                 playerXchange = 0
-            if event.key == pg.K_SPACE:
-                fireBullet(positionXBullet,positionYPlayer)
 
     positionYPlayer -= playerYchange
     positionXPlayer -= playerXchange
     if positionYPlayer <= 0:
         positionYPlayer = 0
-    if positionYPlayer >= 560:
-        positionYPlayer = 560
-    if positionXPlayer >= 750:
-        positionXPlayer = 750
-    if positionXPlayer <= 0:
-        positionXPlayer = 0
+    if positionYPlayer >= 538:
+        positionYPlayer = 538
+    if positionXPlayer >= 740:
+        positionXPlayer = 740
+    if positionXPlayer <= 545:
+        positionXPlayer = 545
 
     positionYMonster += monsterYChange
     if positionYMonster >= 570:
-        monsterYChange = -4
+        monsterYChange = -3
         positionXMonster += 50
     if positionYMonster <= 0:
-        monsterYChange = 4
+        monsterYChange = 3
         positionXMonster += 50
 
     player(positionXPlayer, positionYPlayer)
@@ -107,7 +125,20 @@ while running:  # We iterate through all the possible events. The window stays
         positionXBullet = positionXPlayer
         bulletState = "ready"
     if bulletState == "Fire":
-        fireBullet(positionXBullet,positionYPlayer)
+        fireBullet(positionXBullet, positionYBullet)
         positionXBullet -= BulletXChange
     # bullet(positionXBullet,positionYBullet)
+
+    # collision
+    collision = isCollision(positionXBullet, positionYBullet, positionXMonster, positionYMonster)
+    if collision:
+        bulletState = "ready"
+        positionXBullet = positionXPlayer
+        if MonsterImage == list_Monsters[0] or MonsterImage == list_Monsters[1]:
+            score += 5
+        else:
+            score += 10
+        positionXMonster = random.randint(50, 150)
+        positionYMonster = random.randint(20, 500)
+        print(score)
     pg.display.update()  # always include this line; serves to update the display(game window)
